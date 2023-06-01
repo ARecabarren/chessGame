@@ -1,7 +1,18 @@
 require_relative '../lib/board.rb'
 require_relative '../lib/moves.rb'
 require_relative '../lib/pieces.rb'
-
+files_left = {
+    'R'=> 'a',
+    'N'=> 'b',
+    'B'=> 'c',
+    'Q'=> 'd',
+}
+files_right = {
+    'K'=> 'e',
+    'B'=> 'f',
+    'N'=> 'g',
+    'R'=> 'h'
+}
 # 
 # describe Board do
     # describe '#initialize' do
@@ -83,18 +94,7 @@ describe Board do
             board.setup_board
             result = Array.new
             rank = '1'
-            files_left = {
-                'R'=> 'a',
-                'N'=> 'b',
-                'B'=> 'c',
-                'Q'=> 'd',
-            }
-            files_right = {
-                'K'=> 'e',
-                'B'=> 'f',
-                'N'=> 'g',
-                'R'=> 'h'
-            }
+            
             files_left.each_pair do |piece, file|
                 piece_on_board = board.cells[file + rank]
                 piece_comparison = piece_on_board.type == piece ? true : false
@@ -108,6 +108,26 @@ describe Board do
                 result << [piece_comparison, color_comparison]
             end
             expect(result.all?([true,true])).to be true
+        end
+        it 'Fills rank 7 with corresponding black pieces' do
+            board = Board.new
+            board.setup_board
+            result = Array.new
+            rank = '8'
+            files_left.each_pair do |piece, file|
+                piece_on_board = board.cells[file + rank]
+                piece_comparison = piece_on_board.type == piece ? true : false
+                color_comparison = piece_on_board.color == 'black' ? true : false
+                result << [piece_comparison, color_comparison]
+            end
+            files_right.each_pair do |piece, file|
+                piece_on_board = board.cells[file + rank]
+                piece_comparison = piece_on_board.type == piece ? true : false
+                color_comparison = piece_on_board.color == 'black' ? true : false
+                result << [piece_comparison, color_comparison]
+            end
+            expect(result.all?([true,true])).to be true
+
         end
     end
 end
