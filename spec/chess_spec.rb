@@ -1,5 +1,7 @@
 require_relative '../lib/board.rb'
 require_relative '../lib/moves.rb'
+require_relative '../lib/pieces.rb'
+
 # 
 # describe Board do
     # describe '#initialize' do
@@ -54,15 +56,58 @@ require_relative '../lib/moves.rb'
 
 describe Board do
     describe '#setup_board' do
-        it 'Fills rank 1 with white pawns' do
+        it 'Fills rank 2 with white pawns' do
             board = Board.new
             board.setup_board
-            row = []
-            rank = 1.to_s
-            'abcdefgh'.split.each do |chr|
-                row << board.cells[chr+rank].class
+            pawns = []
+            rank = '2'
+            'abcdefgh'.split('').each do |file|
+                piece = board.cells[file + rank]
+                pawns << [piece.type, piece.color]
             end
-            expect(row.all?(Piece)).to be true
+            expect(pawns.all?(['pawn','white'])).to be true
+        end
+        it 'Fills rank 7 with black pawns' do
+            board = Board.new
+            board.setup_board
+            pawns = []
+            rank = '7'
+            'abcdefgh'.split('').each do |file|
+                piece = board.cells[file + rank]
+                pawns << [piece.type, piece.color]
+            end
+            expect(pawns.all?(['pawn','black'])).to be true
+        end
+        it 'Fills rank 1 with corresponding white pieces' do 
+            board = Board.new
+            board.setup_board
+            result = Array.new
+            rank = '1'
+            files_left = {
+                'R'=> 'a',
+                'N'=> 'b',
+                'B'=> 'c',
+                'Q'=> 'd',
+            }
+            files_right = {
+                'K'=> 'e',
+                'B'=> 'f',
+                'N'=> 'g',
+                'R'=> 'h'
+            }
+            files_left.each_pair do |piece, file|
+                piece_on_board = board.cells[file + rank]
+                piece_comparison = piece_on_board.type == piece ? true : false
+                color_comparison = piece_on_board.color == 'white' ? true : false
+                result << [piece_comparison, color_comparison]
+            end
+            files_right.each_pair do |piece, file|
+                piece_on_board = board.cells[file + rank]
+                piece_comparison = piece_on_board.type == piece ? true : false
+                color_comparison = piece_on_board.color == 'white' ? true : false
+                result << [piece_comparison, color_comparison]
+            end
+            expect(result.all?([true,true])).to be true
         end
     end
 end

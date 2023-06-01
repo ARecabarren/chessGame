@@ -45,17 +45,10 @@ class Board
         end
     end
 
-    def class_variables
-        puts "Left files: #{@@files_left}"
-        puts "Right files: #{@@files_right}"
+    def files_left
+        @@files_left
     end
-end
-
-board = Board.new
-board.setup_board
-pawns = []
-rank = '2'
-'abcdefgh'.split('').each do |file|
-    piece = board.cells[file + rank]
-    pawns << piece.type
+    def files_right
+        @@files_right
+    end
 end
