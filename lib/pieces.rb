@@ -5,8 +5,36 @@ class Piece
         @type = type
         @color = color
         @position = position
+        #Need to set @availables_moves
+        #Need to adapt directions acording to @type
     end
 
+    def get_directions
+        case @type
+        when 'R'
+            
+        when 'N'
+            [
+                [2,1],[2,-1],[-2,1],[-2,-1],
+                [1,2],[1,-2],[-1,2],[-1,-2]
+            ]
+        when 'B'
+
+        when 'Q'
+
+        when 'K'
+            [
+                [0,1],[1,1],[1,0],[-1,1],[-1,0],
+                [-1,-1],[0,-1],[1,-1]
+            ]
+        when 'pawn'
+
+        else
+            return
+        end
+    end
+
+    knight_
 end
 
 
