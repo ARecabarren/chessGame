@@ -11,10 +11,17 @@ module Moves
     end
     
     def valid_move?(move)
+        return false unless in_boundaries?(move)
+
+    end
+
+    def in_boundaries?(move)
+        xcoord, ycoord = move
+        xcoord.between?(0, 7) && ycoord.between?(0, 7)
+    end
+
+    def same_color?(move)
         
     end
 
-    def check_boundaries(move)
-        
-    end
 end
