@@ -6,6 +6,7 @@ class Piece
         @color = color
         @position = position
         @directions = get_directions
+        @first_move = true
         #Need to set @availables_moves
         #Need to adapt directions acording to @type
     end
@@ -28,10 +29,22 @@ class Piece
                 [0,1],[1,1],[1,0],[-1,1],[-1,0],
                 [-1,-1],[0,-1],[1,-1]
             ]
-        when 'pawn'
-
+        when 'P'
+            if @color == :white
+                if @first_move
+                    [[-1, 0], [-2, 0]]
+                else
+                    [[-1,0]]
+                end
+            else
+                if @first_move
+                    [[1, 0], [2, 0]]
+                else
+                    [[1, 0]]
+                end
+            end
         else
-            return
+            return []
         end
     end
 
@@ -49,6 +62,7 @@ class Piece
                 new_x += delta_y
             end
         end
+        moves
     end
     
 end
