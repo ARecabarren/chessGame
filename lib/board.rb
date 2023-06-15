@@ -147,7 +147,6 @@ class Board
           loop do
             new_coord = process_direction(direction, current_x, current_y)
             to_cell = cells[coord_to_cell(new_coord)]
-
             if in_boundaries?(new_coord)
               if to_cell.nil?
                 piece.in_range_moves << new_coord
@@ -155,7 +154,6 @@ class Board
               elsif to_cell.color != piece.color
                 piece.in_range_moves << new_coord
                 break
-                # current_x, current_y = process_direction(direction, current_x, current_y)
               else
                 break
               end
@@ -209,7 +207,8 @@ class Board
 end
 
 board = Board.new
-board.cells['c3'] = Piece.new(:R, :white, 'c3', board)
+board.cells['c3'] = Piece.new(:R, :white, 'c3')
+board.cells['d4'] = Piece.new(:N, :black, 'd4')
 board.compute_moves
 show_board(board.cells)
 # whiteKing = Piece.new(:K, :white, 'e4', board)
