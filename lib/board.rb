@@ -79,23 +79,9 @@ class Board
   end
 
   def move(from, to)
-
-    if  available_position(from,to) || different_color?(from, to) && cells[from].moves
-      update_position(cells[from], from, to)
-    else
-      show_board
-    end
-
-
-  end
-
-  def different_color?(from, to)
-    cells[from].color != cells[to].color ? true : p(same_color,show_board(cells))
-    
-  end
-
-  def available_position(from, to)
-    return true if cells[to].nil?
+    #Things to check before move
+    #Move include as legal move in piece.
+    #Puts own king in check
   end
 
   def update_position(piece, from, to)
@@ -105,24 +91,7 @@ class Board
     show_board(cells)
   end
 
-  def coordinate_to_key(coordinate)
-    file_index = coordinate[1]
-    rank = coordinate[0]
 
-    files = 'abcdefgh'
-    file = files[file_index]
-    "#{file}#{rank}"
-  end
-
-  def fileRank_to_coord(position)
-    column = position[1]
-    row = 0
-    'abcdefgh'.split('').each do |file|
-      break if position[0] == file
-      row += 1
-    end
-    [row, column]
-  end
 
   def each_piece
     cells.each_pair do |cell, piece|
@@ -138,7 +107,12 @@ class Board
 
   def compute_moves
     each_piece do |cell, piece|
-      piece.legal_moves = []
+      compute_move(piece)
+    end
+  end
+
+  def compute_move(piece)
+    piece.legal_moves = []
       current_x, current_y = cell_to_coord(piece.position)
       case piece.type
       when :R
@@ -254,9 +228,27 @@ class Board
         end
       else
       end
-    end
   end
 end
+
+# def coordinate_to_key(coordinate)
+#   file_index = coordinate[1]
+#   rank = coordinate[0]
+
+#   files = 'abcdefgh'
+#   file = files[file_index]
+#   "#{file}#{rank}"
+# end
+
+# def fileRank_to_coord(position)
+#   column = position[1]
+#   row = 0
+#   'abcdefgh'.split('').each do |file|
+#     break if position[0] == file
+#     row += 1
+#   end
+#   [row, column]
+# end
 
 board = Board.new
 # board.cells['c3'] = Piece.new(:R, :white, 'c3')
