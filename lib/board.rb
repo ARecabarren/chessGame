@@ -23,7 +23,7 @@ class Board
     @cells = {}
     @current_player = :white
     setup_board
-    compute_moves
+    compute_moves(@cells)
   end
 
   def setup_board
@@ -188,7 +188,7 @@ class Board
       if in_boundaries?(new_coord) && cells[coord_to_cell(new_coord)].nil?
         piece.legal_moves << new_coord
         if piece.first_move
-          new_coord = [current_x, current_y + (2 * direction)]
+          new_coord = [current_x + (2 * direction), current_y ]
           if in_boundaries?(new_coord) && cells[coord_to_cell(new_coord)].nil?
             piece.legal_moves << new_coord
           end
@@ -328,12 +328,5 @@ end
 # puts board.cells
 
 board = Board.new
-board.cells = {}
-board.cells['f3'] = Piece.new(:K, :white, 'f3')
-board.cells['b2'] = Piece.new(:R, :black, 'b2')
-board.cells['f4'] = Piece.new(:P, :black, 'f4')
-board.cells['f5'] = Piece.new(:K, :black, 'f5')
-board.current_player = :white
-board.compute_moves
-board.game_state
+legal_moves = board.cells['a2'].legal_moves
 show_board(board.cells)
