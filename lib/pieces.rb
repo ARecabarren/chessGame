@@ -1,5 +1,5 @@
 class Piece
-  attr_accessor :position, :legal_moves
+  attr_accessor :position, :legal_moves, :en_passant_eligible, :first_move
   attr_reader :type, :color, :directions
 
   DIRECTIONS = {
@@ -20,6 +20,8 @@ class Piece
     @position = position
     @first_move = true
     @directions = set_directions
+    @legal_moves = []
+    @en_passant_eligible = false
   end
 
   def set_directions
