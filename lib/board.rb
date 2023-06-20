@@ -2,7 +2,7 @@ require_relative './pieces.rb'
 require_relative './UI.rb'
 include UI
 class Board
-  attr_accessor :cells
+  attr_accessor :cells, :current_player
   attr_reader :files_left, :files_right
 
   FILES_LEFT = {
@@ -36,7 +36,10 @@ class Board
     [2, 7].each do |rank|
       ('a'..'h').each do |file|
         color = rank == 2 ? :white : :black
-        @cells[file + rank.to_s] = Piece.new(:P, color, file + rank.to_s, cells)
+        position = file + rank.to_s
+        piece = Piece.new(:P, color, position, cells)
+        cells[position] = piece
+        set_en_passant_eligible(piece, position)
       end
     end
   end
@@ -81,6 +84,7 @@ class Board
   end
 
   def move(from, to)
+    piece = cells[from]
     #Things to check before move
     #Move include as legal move in piece.
     #Puts own king in check?
@@ -89,9 +93,7 @@ class Board
     #Is move blocked?
     #promote pawn?
     #castling?
-    #en passant?
-    #checkmate?
-    #stalemate?
+    update_en_passant_eligible(piece, from, to)
   end
 
   def update_position(piece, from, to)
@@ -104,7 +106,7 @@ class Board
 
   def temp_move(piece, from, to, cells = @cells)
     piece.position = to
-    cells[to] = cells[from]
+    cells[to] = piece
     cells[from] = nil
     compute_moves(cells)
   end
@@ -123,8 +125,9 @@ class Board
 
   def compute_moves(cells = @cells)
     each_piece(cells) do |cell, piece|
-      compute_move(piece)
+      compute_move(piece, cells)
     end
+    compute_pawn_moves(cells)
   end
 
   def compute_move(piece, cells = @cells)
@@ -151,11 +154,11 @@ class Board
               break
             end
           else
-            current_x, current_y = cell_to_coord(piece.position)
+            current_x, current_y = original_position
             break
           end
         end
-      when :N, :K, :P
+      when :N, :K
         new_coord = process_direction(direction, current_x, current_y)
         to_cell = cells[coord_to_cell(new_coord)]
   
@@ -174,6 +177,42 @@ class Board
     end
 
 
+  end
+
+  def compute_pawn_moves(cells)
+    each_piece(cells) do |cell, piece|
+      next unless piece.type == :P
+      current_x, current_y = cell_to_coord(piece.position)
+      direction = (piece.color == :white ? 1 : -1)
+      new_coord = [current_x + direction, current_y]
+      if in_boundaries?(new_coord) && cells[coord_to_cell(new_coord)].nil?
+        piece.legal_moves << new_coord
+        if piece.first_move
+          new_coord = [current_x, current_y + (2 * direction)]
+          if in_boundaries?(new_coord) && cells[coord_to_cell(new_coord)].nil?
+            piece.legal_moves << new_coord
+          end
+        end
+      end
+      #Captura diagonal
+      [-1, 1].each do |dx|
+        new_coord = [current_x + direction, current_y + dx]
+        if in_boundaries?(new_coord)
+          piece_in_destination = cells[coord_to_cell(new_coord)]
+          if !piece_in_destination.nil? && piece_in_destination.color != piece.color
+            piece.legal_moves << new_coord
+          end
+        end
+        # En passant
+        en_passant_target = coord_to_cell([current_x , current_y + dx])
+        if in_boundaries?(new_coord) && cells[en_passant_target].is_a?(Piece) &&
+          cells[en_passant_target].type == :P && cells[en_passant_target].color != piece.color &&
+          cells[en_passant_target].en_passant_eligible
+          piece.legal_moves << new_coord
+        end
+      end
+    end
+    
   end
 
   def process_direction(direction, current_x, current_y)
@@ -240,12 +279,36 @@ class Board
       piece_in_destination = cells[coord_to_cell(move)]
       temp_cell = cells.dup
       temp_move(piece, original_position, destination,temp_cell)
+      # compute_moves(temp_cell)
       in_check = king_in_check?(piece.color, temp_cell)
       if in_check 
         pre_legal_moves.delete(move)
       end
+      piece.position = original_position
     end
     piece.legal_moves = pre_legal_moves
+  end
+
+  def set_en_passant_eligible(piece, position)
+    piece.en_passant_eligible = false # Restablecer el estado a falso por defecto
+  
+    if piece.type == :P && (position[1].to_i - piece.position[1].to_i).abs == 2
+      piece.en_passant_eligible = true
+    end
+  end
+
+  def update_en_passant_eligible(piece, from, to)
+    return unless piece.type == :P # Verificar si la pieza es un peón
+  
+    # Obtener las coordenadas de la posición actual y de destino
+    current_x, current_y = cell_to_coord(from)
+    new_x, new_y = cell_to_coord(to)
+  
+    if (new_x - current_x).abs == 2 # La pieza se ha movido dos posiciones hacia adelante
+      piece.en_passant_eligible = true
+    else
+      piece.en_passant_eligible = false
+    end
   end
 end
 
@@ -266,12 +329,11 @@ end
 
 board = Board.new
 board.cells = {}
-board.cells['e1'] = Piece.new(:K, :white, 'e1')
-board.cells['d2'] = Piece.new(:P, :white, 'd2')
-board.cells['e2'] = Piece.new(:P, :white, 'e2')
-board.cells['f2'] = Piece.new(:P, :white, 'f2')
-board.cells['a1'] = Piece.new(:R, :black, 'a1')
-board.cells['h1'] = Piece.new(:R, :black, 'h1')
+board.cells['f3'] = Piece.new(:K, :white, 'f3')
+board.cells['b2'] = Piece.new(:R, :black, 'b2')
+board.cells['f4'] = Piece.new(:P, :black, 'f4')
+board.cells['f5'] = Piece.new(:K, :black, 'f5')
+board.current_player = :white
 board.compute_moves
 board.game_state
 show_board(board.cells)
