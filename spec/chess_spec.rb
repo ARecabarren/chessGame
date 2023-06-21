@@ -131,9 +131,11 @@ describe Board do
     describe "king_in_check?" do
         it "returns true if the king is in check" do
             board = Board.new
-            blackPawn = board.cells['e7']
-            board.update_position(blackPawn, 'e7', 'e2')
-            expect(board.king_in_check?(:white)).to be true
+            board.cells = {}
+            board.cells['e8'] = Piece.new(:K, :black, 'e8')
+            board.cells['e1'] = Piece.new(:R, :white, 'e1')
+            board.compute_moves
+            expect(board.king_in_check?(:black)).to be true
         end
         it "returns false if the king is not in check" do
             board = Board.new
@@ -153,6 +155,30 @@ describe Board do
             board.compute_moves
             show_board(board.cells)
             expect(board.game_state).to be :checkmate
+        end
+        it 'returns :stalemate if the king is in stalemate' do
+            # Situación de empate
+            board = Board.new
+            board.cells = {
+                'e4' => Piece.new(:K, :white, 'e4'),
+                'c7' => Piece.new(:Q, :white, 'c7'),
+                'a8' => Piece.new(:K, :black, 'a8')
+            }
+            board.current_player = :black
+            board.compute_moves
+            expect(board.game_state).to be :stalemate
+        end
+        it 'return :stalemate if the king is in stalemate' do 
+            #Otro stalemate
+            board = Board.new
+            board.cells = {}
+            board.cells['f3'] = Piece.new(:K, :white, 'f3')
+            board.cells['b2'] = Piece.new(:R, :black, 'b2')
+            board.cells['f4'] = Piece.new(:P, :black, 'f4')
+            board.cells['f5'] = Piece.new(:K, :black, 'f5')
+            board.current_player = :white
+            board.compute_moves
+            expect(board.game_state).to be :stalemate
         end
     end
 end
