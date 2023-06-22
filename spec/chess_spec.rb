@@ -181,4 +181,85 @@ describe Board do
             expect(board.game_state).to be :stalemate
         end
     end
+    describe 'castle' do
+        let(:board) { Board.new }
+        let(:cells) { {} }
+        
+        before do
+            board.cells = cells
+        end
+        
+        describe 'king-side castling' do
+            context 'when castling is valid' do
+                it 'moves the king and rook correctly' do
+                    board.cells['e1'] = Piece.new(:K, :white, 'e1')
+                    board.cells['h1'] = Piece.new(:R, :white, 'h1')
+                    board.castle('e1', 'g1')
+                    
+                    expect(board.cells['g1']).to be_instance_of(Piece)
+                    expect(board.cells['g1'].type).to eq(:K)
+                    expect(board.cells['g1'].color).to eq(:white)
+                    expect(board.cells['f1']).to be_instance_of(Piece)
+                    expect(board.cells['f1'].type).to eq(:R)
+                    expect(board.cells['f1'].color).to eq(:white)
+                end
+            end
+            context 'when castling is invalid' do
+                it 'does not perform the castling' do
+                    board.cells['e1'] = Piece.new(:K, :white, 'e1')
+                    board.cells['h1'] = Piece.new(:R, :white, 'h1')
+                    board.cells['g1'] = Piece.new(:N, :white, 'g1')  # Piece blocking the path
+                
+                    board.castle('e1', 'g1')
+                    expect(board.cells['e1']).to be_instance_of(Piece)
+                    expect(board.cells['e1'].type).to eq(:K)
+                    expect(board.cells['e1'].color).to eq(:white)
+                
+                    expect(board.cells['h1']).to be_instance_of(Piece)
+                    expect(board.cells['h1'].type).to eq(:R)
+                    expect(board.cells['h1'].color).to eq(:white)
+                end
+            end
+        end
+        
+        describe 'queen-side castling' do
+            context 'when castling is valid' do
+                it 'move the king and rook correctly' do
+                    board.cells['e1'] = Piece.new(:K, :white, 'e1')
+                    board.cells['a1'] = Piece.new(:R, :white, 'a1')
+
+                    board.castle('e1', 'c1')
+
+                    expect(board.cells['c1']).to be_instance_of(Piece)
+                    expect(board.cells['c1'].type).to eq(:K)
+                    expect(board.cells['c1'].color).to eq(:white)
+
+                    expect(board.cells['d1']).to be_instance_of(Piece)
+                    expect(board.cells['d1'].type).to eq(:R)
+                    expect(board.cells['d1'].color).to eq(:white)
+                end
+            end
+
+            context 'when castling is invalid' do
+                it 'does not perform the castling' do
+                    board.cells['e1'] = Piece.new(:K, :white, 'e1')
+                    board.cells['a1'] = Piece.new(:R, :white, 'a1')
+                    board.cells['b1'] = Piece.new(:N, :white, 'b1')  # Piece blocking the path
+
+                    board.castle('e1', 'c1')
+
+                    expect(board.cells['e1']).to be_instance_of(Piece)
+                    expect(board.cells['e1'].type).to eq(:K)
+                    expect(board.cells['e1'].color).to eq(:white)
+
+                    expect(board.cells['a1']).to be_instance_of(Piece)
+                    expect(board.cells['a1'].type).to eq(:R)
+                    expect(board.cells['a1'].color).to eq(:white)
+                end
+            end
+        end
+    
+    end
 end
+
+##Lets test castle

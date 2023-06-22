@@ -94,6 +94,7 @@ class Board
     #promote pawn?
     #castling?
     update_en_passant_eligible(piece, from, to)
+    castle(from, to)
   end
 
   def update_position(piece, from, to)
@@ -310,23 +311,111 @@ class Board
       piece.en_passant_eligible = false
     end
   end
+
+  def castle(from, to)
+    piece = cells[from]
+    return unless piece.is_a?(Piece) && piece.eligible_for_castle?(@current_player) && cells[to].nil?
+    if piece.is_a?(Piece) && piece.type == :K && piece.first_move && piece.color == @current_player
+      if kingside_castle?(from, to)
+          #Agregar display especifico para cada caso
+        return if king_in_check?(piece.color)
+        return unless cells['f1'].nil?
+        each_piece do |cell, board_piece|
+          next if piece.color == board_piece.color
+          return if board_piece.legal_moves.include?([0,6])
+          return if board_piece.legal_moves.include?([0,7])
+        end
+    
+        kingside_castle(piece)
+      elsif queenside_castle?(from, to)
+        return if king_in_check?(piece.color)
+        return unless cells['b1'].nil?
+        return unless cells['d1'].nil?
+        each_piece do |cell, board_piece|
+          next if piece.color == board_piece.color
+          #Agregar display especifico para cada caso
+          return if board_piece.legal_moves.include?([0,1])
+          return if board_piece.legal_moves.include?([0,2])
+          return if board_piece.legal_moves.include?([0,3])
+        end
+        queenside_castle(piece)
+      end
+    end
+  end
+
+  def kingside_castle?(from, to)
+    from_file = from[0]
+    to_file = to[0]
+    from_rank = from[1].to_i
+    to_rank = to[1].to_i
+  
+    piece = cells[from]
+    rook_position = "h#{from_rank}"
+    rook = cells[rook_position]
+
+    piece.color == @current_player &&
+    piece.type == :K &&
+    piece.first_move &&
+    rook.is_a?(Piece) &&
+    rook.type == :R &&
+    rook.first_move &&
+    from_file == 'e' &&
+    to_file == 'g' &&
+    from_rank == to_rank
+  end
+
+  def queenside_castle?(from, to)
+    from_file = from[0]
+    to_file = to[0]
+    from_rank = from[1].to_i
+    to_rank = to[1].to_i
+    
+    piece = cells[from]
+    rook_position = "a#{from_rank}"
+    rook = cells[rook_position]
+    
+    piece.color == @current_player &&
+    piece.type == :K &&
+    piece.first_move &&
+    rook.is_a?(Piece) &&
+    rook.type == :R &&
+    rook.first_move &&
+    from_file == 'e' &&
+    to_file == 'c' &&
+    from_rank == to_rank
+  end
+
+  def kingside_castle(king)
+    rank = king.position[1]
+    king_to = "g#{rank}"
+    rook_from = "h#{rank}"
+    rook_to = "f#{rank}"
+  
+    update_position(king, king.position, king_to)
+    update_position(cells[rook_from], rook_from, rook_to)
+  end
+
+  def queenside_castle(king)
+    rank = king.position[1]
+    king_to = "c#{rank}"
+    rook_from = "a#{rank}"
+    rook_to = "d#{rank}"
+  
+    update_position(king, king.position, king_to)
+    update_position(cells[rook_from], rook_from, rook_to)
+  end
+
 end
 
 
-# board = Board.new
-# board.cells['c3'] = Piece.new(:R, :white, 'c3')
-# board.cells['d4'] = Piece.new(:N, :black, 'd4')
-# board.cells['e5'] = Piece.new(:B, :white, 'e5')
-
-# board.compute_moves
-# show_board(board.cells)
-# whiteKing = Piece.new(:K, :white, 'e4', board)
-# p whiteKing.legal_moves
-# board.move('b1','c3')
-# show_board(board.cells)
-
-# puts board.cells
-
 board = Board.new
-legal_moves = board.cells['a2'].legal_moves
+board.cells = {}
+board.cells['e1'] = Piece.new(:K, :white, 'e1')
+board.cells['a1'] = Piece.new(:R, :white, 'a1')
+board.cells['b1'] = Piece.new(:N, :white, 'b1')  # Piece blocking the path
+
+board.castle('e1', 'c1')
+show_board(board.cells)
+
+board.castle('e1', 'c1')
 show_board(board.cells)
