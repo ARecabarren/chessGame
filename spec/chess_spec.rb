@@ -260,6 +260,77 @@ describe Board do
         end
     
     end
+
+    describe 'is_pawn_promotion?' do
+        let(:board) { Board.new }
+        before do
+            board.cells = {}
+        end
+
+        it 'returns true if the pawn can be promoted' do
+            board.cells['a7'] = Piece.new(:P, :white, 'a7')
+            from = 'a7'
+            to = 'a8'
+            current_player = :white
+            expect(board.is_pawn_promotion?(from, to, current_player)).to be true
+        end
+
+        it 'return false if the pawn cannot be promoted' do
+            board.cells['a7'] = Piece.new(:P, :white, 'a7')
+            from = 'a7'
+            to = 'a6'
+            current_player = :white
+            expect(board.is_pawn_promotion?(from, to, current_player)).to be false
+        end
+
+        it 'returns false if the piece is not a pawn' do
+            board.cells['a7'] = Piece.new(:N, :white, 'a7')
+            from = 'a7'
+            to = 'a8'
+            current_player = :white
+            expect(board.is_pawn_promotion?(from, to, current_player)).to be false
+        end
+
+        describe 'promote_pawn' do
+            it 'promotes the pawn to queen when Q is selected' do
+                board.cells['a7'] = Piece.new(:P, :white, 'a7')
+                from = 'a7'
+                to = 'a8'
+                current_player = :white
+                allow(board).to receive(:gets).and_return('Q')
+                board.promote_pawn(from, to, current_player)
+                expect(board.cells['a8']).to be_instance_of(Piece)
+                expect(board.cells['a8'].type).to eq(:Q)
+            end
+            it 'repetedly asks for a piece until a valid piece is selected' do
+                board.cells['a7'] = Piece.new(:P, :white, 'a7')
+                from = 'a7'
+                to = 'a8'
+                current_player = :white
+
+                allow(board).to receive(:gets).and_return('X', 'Y', 'R')
+                expect(board.promote_pawn(from, to, current_player)).to eq(nil)
+                expect(board.cells['a8']).to be_instance_of(Piece)
+                expect(board.cells['a8'].type).to eq(:R)
+            end
+        end
+    end
+    describe '#en_passant' do
+        let(:board) { Board.new }
+        context "when en passant move is possible" do
+            it "captures the pawn en passant on the left side" do
+                board.move('a2', 'a4')
+                board.move('c7', 'c6')
+                board.move('a4', 'a5')
+                board.move('b7', 'b5')
+                board.move('a5', 'b6')
+                expect(board.cells['b6']).to be_instance_of(Piece)
+                expect(board.cells['b5']).to be_nil
+                expect(board.cells['a5']).to be_nil
+            end
+        end
+    end
 end
+
 
 ##Lets test castle

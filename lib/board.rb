@@ -39,7 +39,6 @@ class Board
         position = file + rank.to_s
         piece = Piece.new(:P, color, position, cells)
         cells[position] = piece
-        set_en_passant_eligible(piece, position)
       end
     end
   end
@@ -85,7 +84,26 @@ class Board
 
   def move(from, to)
     piece = cells[from]
-    #Things to check before move
+    coords_to = cell_to_coord(to)
+    if piece.type == :P
+      update_en_passant_eligible(piece) if piece.en_passant_eligible
+      if piece.legal_moves.include?(coords_to)
+        if is_a_en_passant_move?(from,to)
+          en_passant(from, to)
+        elsif is_pawn_promotion?(from, to, piece)
+          promote_pawn(piece, from, to)
+        else
+          each_piece do |cell, piece|
+            next unless piece.is_a?(Piece) && piece.type == :P && piece.color != @current_player
+            update_en_passant_eligible(piece) if piece.en_passant_eligible
+          end
+          en_passant_eligible?(from, to)
+          update_position(piece, from, to)
+        end
+      end
+    end
+
+
     #Move include as legal move in piece.
     #Puts own king in check?
     #Puts enemy king in check?
@@ -93,14 +111,16 @@ class Board
     #Is move blocked?
     #promote pawn?
     #castling?
-    update_en_passant_eligible(piece, from, to)
+    # update_en_passant_eligible(piece, from, to)
+    update_position(piece, from, to) unless piece.position == to
     castle(from, to)
   end
 
   def update_position(piece, from, to)
     piece.position = to
     cells[to] = cells[from]
-    cells[from] = nil 
+    cells[from] = nil
+    piece.first_move = false if piece.first_move
     compute_moves
     # show_board(cells)
   end
@@ -290,27 +310,63 @@ class Board
     piece.legal_moves = pre_legal_moves
   end
 
-  def set_en_passant_eligible(piece, position)
-    piece.en_passant_eligible = false # Restablecer el estado a falso por defecto
-  
-    if piece.type == :P && (position[1].to_i - piece.position[1].to_i).abs == 2
+  def en_passant_eligible?(from, to)
+    piece = cells[from]
+    return unless piece.type == :P
+    rank = piece.position[1]
+    file = piece.position[0]
+    to_rank = to[1]
+    to_file = to[0]
+    if piece.first_move && (rank.to_i - to_rank.to_i).abs == 2
       piece.en_passant_eligible = true
     end
   end
 
-  def update_en_passant_eligible(piece, from, to)
-    return unless piece.type == :P # Verificar si la pieza es un peón
-  
-    # Obtener las coordenadas de la posición actual y de destino
-    current_x, current_y = cell_to_coord(from)
-    new_x, new_y = cell_to_coord(to)
-  
-    if (new_x - current_x).abs == 2 # La pieza se ha movido dos posiciones hacia adelante
-      piece.en_passant_eligible = true
+  def en_passant(from, to)
+    piece = cells[from]
+    cell_to = cells[to]
+    return unless cell_to.nil?
+
+    piece_position_coord = cell_to_coord(piece.position)
+    left_cell_coord = [piece_position_coord[0], piece_position_coord[1] - 1]
+    right_cell_coord = [piece_position_coord[0], piece_position_coord[1] + 1]
+    left_cell = coord_to_cell(left_cell_coord)
+    right_cell = coord_to_cell(right_cell_coord)
+    return unless piece.type == :P && cells[left_cell].is_a?(Piece) || cells[right_cell].is_a?(Piece)
+    return unless (cells[left_cell].is_a?(Piece) || cells[right_cell].is_a?(Piece))
+
+    # Movimiento diagonal a la izquierda
+    if cells[left_cell].is_a?(Piece) && cells[left_cell].type == :P && cells[left_cell].en_passant_eligible && 
+      cells[left_cell].color != piece.color && to[0] == left_cell[0]
+      cells[left_cell] = nil
+      update_position(piece, from, to)
+    # Movimiento a la derecha
+    elsif cells[right_cell].is_a?(Piece) && cells[right_cell].type == :P && cells[right_cell].en_passant_eligible &&
+      cells[right_cell].color != piece.color && to[0] == right_cell[0]
+      cells[right_cell] = nil
+      update_position(piece, from, to)
     else
+      update_en_passant_eligible(cells[left_cell]) if cells[left_cell].is_a?(Piece)
+      update_en_passant_eligible(cells[right_cell]) if cells[right_cell].is_a?(Piece)
+    end 
+
+  end
+
+  def update_en_passant_eligible(piece)
+    if piece.en_passant_eligible
       piece.en_passant_eligible = false
     end
   end
+
+  def is_a_en_passant_move?(from, to)
+    piece = cells[from]
+    to_as_coord = cell_to_coord(to)
+    cell_back_step = piece.color == :white ? [to_as_coord[0] - 1, to_as_coord[1]] : [to_as_coord[0] + 1, to_as_coord[1]]
+    cell_back = coord_to_cell(cell_back_step)
+    return unless piece.type == :P && cells[cell_back].is_a?(Piece) && cells[cell_back].type == :P && cells[cell_back].en_passant_eligible
+    return true
+  end
+
 
   def castle(from, to)
     piece = cells[from]
@@ -405,17 +461,33 @@ class Board
     update_position(cells[rook_from], rook_from, rook_to)
   end
 
+  def is_pawn_promotion?(from, to, current_player)
+    piece = cells[from]
+    piece.type == :P && to[1] == '8' || to[1] == '1' && piece.color == current_player
+  end
+
+  def promote_pawn(from, to, current_player)
+    puts "Promote your pawn to (Q)ueen, (R)ook, (B)ishop or (N)ight"
+    print "> "
+    piece = gets.chomp.upcase
+    until %w(Q R B N).include?(piece)
+      puts "Invalid selection. Please try again."
+      print "> "
+      piece = gets.chomp.upcase
+    end
+    cells[to] = Piece.new(piece.to_sym, current_player, to)
+    cells[from] = nil
+  end
+
 end
 
 
 board = Board.new
-board.cells = {}
-board.cells['e1'] = Piece.new(:K, :white, 'e1')
-board.cells['a1'] = Piece.new(:R, :white, 'a1')
-board.cells['b1'] = Piece.new(:N, :white, 'b1')  # Piece blocking the path
-
-board.castle('e1', 'c1')
+board.move('a2', 'a4')
+board.move('c7', 'c6')
+board.move('a4', 'a5')
+board.move('b7', 'b5')
+board.move('a5', 'b6')
 show_board(board.cells)
 
-board.castle('e1', 'c1')
 show_board(board.cells)
