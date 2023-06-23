@@ -29,10 +29,10 @@ class Piece
     directions = directions[@color] if directions.is_a?(Hash)
     directions
   end
+
+  def eligible_for_castle?(current_player)
+    type == :K && first_move && color == current_player
+  end
+
 end
 
-
-
-# whitePawn = Piece.new(:P,:white,'a2')
-# whiteKnight = Piece.new(:N, :white, 'b1')
-# whiteKnight.in_range_moves # [[2, 2], [2, 0], [1, 3]]
