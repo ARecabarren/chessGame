@@ -1,6 +1,6 @@
 require_relative './pieces.rb'
 require_relative './UI.rb'
-include UI
+require 'pry-byebug'
 class Board
   attr_accessor :cells, :current_player
   attr_reader :files_left, :files_right
@@ -70,11 +70,14 @@ class Board
 
   def game_state
     if king_in_check?(@current_player)
+      puts "#{@current_player.to_s.capitalize} king is in check!"
       if no_legal_moves?(@current_player)
+        puts "Checkmate! #{get_opposite_player.to_s.capitalize} wins!"
         return :checkmate
       end
     else
       if no_legal_moves?(@current_player)
+        puts "Stalemate!"
         return :stalemate
       end
     end
@@ -92,6 +95,7 @@ class Board
           en_passant(from, to)
         elsif is_pawn_promotion?(from, to, piece)
           promote_pawn(piece, from, to)
+          compute_moves(@cells)
         else
           each_piece do |cell, piece|
             next unless piece.is_a?(Piece) && piece.type == :P && piece.color != @current_player
@@ -99,21 +103,25 @@ class Board
           end
           en_passant_eligible?(from, to)
           update_position(piece, from, to)
+          compute_moves
         end
+      else
+        return :illegal_move
       end
+    elsif piece.type == :K
+      castle(from, to)
+    elsif piece.legal_moves.include?(coords_to)
+      # binding.pry
+      update_position(piece, from, to)
+    else
+      return :illegal_move
     end
 
+    no_legal_moves?(get_opposite_player) if king_in_check?(get_opposite_player)
 
-    #Move include as legal move in piece.
-    #Puts own king in check?
-    #Puts enemy king in check?
-    #Is move legal?
-    #Is move blocked?
-    #promote pawn?
-    #castling?
-    # update_en_passant_eligible(piece, from, to)
-    update_position(piece, from, to) unless piece.position == to
-    castle(from, to)
+    
+    
+    # update_position(piece, from, to) unless piece.position == to || piece.type == :P
   end
 
   def update_position(piece, from, to)
@@ -121,8 +129,13 @@ class Board
     cells[to] = cells[from]
     cells[from] = nil
     piece.first_move = false if piece.first_move
+
     compute_moves
     # show_board(cells)
+  end
+
+  def get_opposite_player
+    @current_player == :white ? :black : :white
   end
 
   def temp_move(piece, from, to, cells = @cells)
@@ -156,6 +169,7 @@ class Board
     original_position = cell_to_coord(piece.position)
     current_x, current_y = cell_to_coord(piece.position)
     piece.directions.each do |direction|
+      next if piece.type == :P
       case piece.type
       when :R, :B, :Q
         loop do
@@ -298,6 +312,7 @@ class Board
       destination = coord_to_cell(move)
       original_position = piece.position
       piece_in_destination = cells[coord_to_cell(move)]
+      pre_legal_moves.delete(move) if (piece_in_destination.is_a?(Piece) && piece_in_destination.color == piece.color)
       temp_cell = cells.dup
       temp_move(piece, original_position, destination,temp_cell)
       # compute_moves(temp_cell)
@@ -481,13 +496,17 @@ class Board
 
 end
 
+#Moves to test mate pastor
+# 1. e2 e4 / e7 e5
+# 2. d1 h5 / b8 c6
+# 3. f1 c4 / g8 f6
+# 4. h5 f7 / e8 f7
 
-board = Board.new
-board.move('a2', 'a4')
-board.move('c7', 'c6')
-board.move('a4', 'a5')
-board.move('b7', 'b5')
-board.move('a5', 'b6')
-show_board(board.cells)
-
-show_board(board.cells)
+# board = Board.new
+# board.move('e2', 'e4')
+# board.move('e7', 'e5')
+# board.move('d1', 'h5')
+# board.move('b8', 'c6')
+# board.move('f1', 'c4')
+# board.move('g8', 'f6')
+# board.move('h5', 'f7')
