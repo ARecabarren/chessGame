@@ -153,7 +153,7 @@ describe Board do
             board.cells['a1'] = Piece.new(:R, :black, 'a1')
             board.cells['h1'] = Piece.new(:R, :black, 'h1')
             board.compute_moves
-            show_board(board.cells)
+            UI.show_board(board.cells)
             expect(board.game_state).to be :checkmate
         end
         it 'returns :stalemate if the king is in stalemate' do
