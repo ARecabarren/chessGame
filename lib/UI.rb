@@ -1,10 +1,74 @@
 module UI
-  
+  UNICODE_PIECES = {
+    K: "\u2654",
+    Q: "\u2655",
+    R: "\u2656",
+    B: "\u2657",
+    N: "\u2658",
+    P: "\u2659",
+    k: "\u265A",
+    q: "\u265B",
+    r: "\u265C",
+    b: "\u265D",
+    n: "\u265E",
+    p: "\u265F",
+    _: " "
+  }
+
   def self.show_board(board_hash)
     board = translate_hash(board_hash)
-    board.each { |rank| puts rank.join(' ') }
-    puts "\n"
+    add_reference_columns(board)
+    print_board(board)
+    puts
   end
+
+  def self.add_reference_columns(board)
+    board.each_with_index { |rank, index| rank.unshift((8 - index).to_s) }
+    board.unshift([' ', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'])
+  end
+
+  def self.print_board(board)
+    board.each do |row|
+      puts row.join(' ')
+    end
+  end
+
+  def self.translate_board(board_hash)
+    board = []
+    (1..8).each do |rank|
+      row = ('a'..'h').map { |file| UNICODE_PIECES[board_hash[file + rank.to_s]] }
+      board << row
+    end
+    board
+  end
+
+  def self.translate_hash(board_hash)
+    translated_board = []
+    [8, 7, 6, 5, 4, 3, 2, 1].each do |rank|
+        full_rank = []
+        ('a'..'h').each do |file|
+          piece = board_hash[file + rank.to_s]
+          
+          piece_type = piece.nil? ? :_ : translate_piece_type(piece)
+          
+          full_rank.push(piece_type)
+        end
+        translated_board.push(full_rank)
+    end
+    translated_board
+  end
+
+  def self.translate_piece_type(piece)
+    piece_color = piece.color
+    piece_type = piece.type
+
+    if piece_color == :black
+      piece_type = piece_type.to_s.downcase.to_sym
+    end
+
+    UNICODE_PIECES[piece_type]
+  end
+
 
   def self.display_empty_cell_message
     puts 'The choosen cell is empty'
@@ -42,10 +106,7 @@ module UI
     input = gets.chomp
     case input
     when 'save'
-      display_save_menu
-      input = gets.chomp
-      save_game(input)
-      nil
+      return 'save'
     when 'exit'
       puts "Goodbye!"
       exit
@@ -57,10 +118,6 @@ module UI
 
   def self.valid_move_input?(input)
     input.match?(/^[a-h][1-8]\s[a-h][1-8]$/)
-  end
-
-  def self.save_game(filename)
-    File.open("./saves/#{filename}.yml", 'w') { |file| file.write(YAML.dump(self)) }
   end
 
   def self.get_input
@@ -127,31 +184,6 @@ module UI
     puts "Invalid input"
   end
 
-  def self.translate_hash(board_hash)
-    translated_board = []
-    [8, 7, 6, 5, 4, 3, 2, 1].each do |rank|
-        full_rank = []
-        ('a'..'h').each do |file|
-          piece = board_hash[file + rank.to_s]
-          
-          piece_type = piece.nil? ? :_ : translate_piece_type(piece)
-          
-          full_rank.push(piece_type)
-        end
-        translated_board.push(full_rank)
-    end
-    translated_board
-  end
-
-  def self.translate_piece_type(piece)
-    piece_color = piece.color
-    piece_type = piece.type
-
-    if piece_color == :black
-      piece_type = piece_type.to_s.downcase.to_sym
-    end
-
-    piece_type
-  end
+  
 
 end
