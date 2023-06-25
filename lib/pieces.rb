@@ -14,7 +14,7 @@ class Piece
     }
   }
 
-  def initialize(type, color, position,board_cells = nil)
+  def initialize(type, color, position,first_move = true, legal_moves = [], en_passant_eligible = false)
     @type = type
     @color = color
     @position = position
