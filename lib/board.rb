@@ -384,30 +384,47 @@ class Board
 
 
   def castle(from, to)
+    @QUEEN_SIDE_BLACK_CELLS = ['b8', 'c8', 'd8'].map { |cell| cell_to_coord(cell) }
+    @KING_SIDE_BLACK_CELLS = ['f8', 'g8'].map { |cell| cell_to_coord(cell) }
+    @QUEEN_SIDE_WHITE_CELLS = ['b1', 'c1', 'd1'].map { |cell| cell_to_coord(cell) }
+    @KING_SIDE_WHITE_CELLS = ['f1', 'g1'].map { |cell| cell_to_coord(cell) }
     piece = cells[from]
-    return unless piece.is_a?(Piece) && piece.eligible_for_castle?(@current_player) && cells[to].nil?
+    return :illegal_move unless piece.is_a?(Piece) && piece.eligible_for_castle?(@current_player) && cells[to].nil?
     if piece.is_a?(Piece) && piece.type == :K && piece.first_move && piece.color == @current_player
       if kingside_castle?(from, to)
-          #Agregar display especifico para cada caso
-        return if king_in_check?(piece.color)
-        return unless cells['f1'].nil?
+        
+        return :illegal_move if king_in_check?(piece.color)
+        if piece.color == :black
+          return :illegal_move unless @KING_SIDE_BLACK_CELLS.all? { |cell| cells[coord_to_cell(cell)].nil? }
+        elsif piece.color == :white
+          return :illegal_move unless @KING_SIDE_WHITE_CELLS.all? { |cell| cells[coord_to_cell(cell)].nil? }
+        end
         each_piece do |cell, board_piece|
           next if piece.color == board_piece.color
-          return if board_piece.legal_moves.include?([0,6])
-          return if board_piece.legal_moves.include?([0,7])
+          if piece.color == :black
+            return :illegal_move if @KING_SIDE_BLACK_CELLS.any? { |cell| board_piece.legal_moves.include?(cell) }
+          elsif piece.color == :white
+            return :illegal_move if @KING_SIDE_WHITE_CELLS.any? { |cell| board_piece.legal_moves.include?(cell) }
+          end
         end
+
     
         kingside_castle(piece)
       elsif queenside_castle?(from, to)
-        return if king_in_check?(piece.color)
-        return unless cells['b1'].nil?
-        return unless cells['d1'].nil?
+        return :illegal_move if king_in_check?(piece.color)
+        if piece.color == :black
+          return :illegal_move unless @QUEEN_SIDE_BLACK_CELLS.all? { |cell| cells[coord_to_cell(cell)].nil? }
+        elsif piece.color == :white
+          return :illegal_move unless @QUEEN_SIDE_WHITE_CELLS.all? { |cell| cells[coord_to_cell(cell)].nil? }
+        end
         each_piece do |cell, board_piece|
           next if piece.color == board_piece.color
           #Agregar display especifico para cada caso
-          return if board_piece.legal_moves.include?([0,1])
-          return if board_piece.legal_moves.include?([0,2])
-          return if board_piece.legal_moves.include?([0,3])
+          if piece.color == :black
+            return :illegal_move if @QUEEN_SIDE_BLACK_CELLS.any? { |cell| board_piece.legal_moves.include?(cell) }
+          elsif piece.color == :white
+            return :illegal_move if @QUEEN_SIDE_WHITE_CELLS.any? { |cell| board_piece.legal_moves.include?(cell) }
+          end
         end
         queenside_castle(piece)
       end
